@@ -56,7 +56,7 @@ build_binutils() {
         make -j"$(nproc)" 2>&1
         make install 2>&1
         rm -rf "${SOURCE_PREFIX:?}/${BINUTILS161}"
-    ) | tee -a /var/log/binutils.log
+    ) > /var/log/binutils.log || tail /var/log/binutils.log
 }
 
 build_gcc() {
@@ -77,7 +77,7 @@ build_gcc() {
         make -j"$(nproc)" 2>&1
         make install 2>&1
         cd ~ && rm -rf /tmp/gcc-build
-   ) | tee -a /var/log/gcc.log
+   ) > /var/log/gcc.log || tail /var/log/gcc.log
 }
 
 
@@ -93,7 +93,7 @@ build_gdb() {
         make -j"$(nproc)" 2>&1
         make install 2>&1
         rm -rf "${SOURCE_PREFIX:?}/${GDB161}"
-    ) | tee -a /var/log/gdb.log
+    ) > /var/log/gdb.log || tail /var/log/gdb.log
 }
 
 build_world() {
@@ -105,7 +105,7 @@ build_world() {
         make -j"$(nproc)" 2>&1
         make install 2>&1
         mv "${SOURCE_PREFIX:?}/${SYS161}" "${SOURCE_PREFIX:?}/os161"
-    ) | tee -a /var/log/sys161.log
+    ) > /var/log/sys161.log || tail /var/log/sys161.log
 }
 
 link_files() {
