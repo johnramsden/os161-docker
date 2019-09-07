@@ -143,6 +143,7 @@ main() {
 
     build_binutils
     build_gcc
+    build_gdb
     build_world
     link_files
     create_user
