@@ -13,7 +13,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN echo "deb http://us.archive.ubuntu.com/ubuntu/ bionic universe" >> /etc/apt/sources.list
 RUN apt-get --yes update && \
     apt-get install --yes --no-install-recommends \
-        bmake ncurses-dev libmpc-dev wget curl build-essential && \
+        bmake ncurses-dev libmpc-dev wget curl build-essential tmux && \
     rm -rf /var/lib/apt/lists/*
 
 RUN cd "${SOURCE_PREFIX}" && \
