@@ -1,0 +1,30 @@
+sudo: required
+language: minimal
+env:
+  global:
+    - DOCKER_REPO=johnramsden
+    - DOCKER_TAG=os161
+    - DOCKER_IMAGE_VERSION=latest
+    - COMMIT=${TRAVIS_COMMIT::8}
+    - secure: "Vd2qtrmvz5ME20oKfYeSF36Pr2WvfzAHTfnn8WrnTuIcf98Pvh7CNYsNMpEjHqNzV91Df2jBUyqGHmiQBi118CpZTpPhuvcMj2IscGczm4GF4KCXoTg+nomOkOT2jbFo/xnyT30cFu35PXrZ+8paD0A6RtZqxnxq2YVxYJ4ciqN+d26q6uMiM7CuuB0nRzRPHol5+AJoQTzxHiREVbU0HbW9MTIVUibb1YHlqlM5XDWfoL/qf9HpBjDYWHQB4dCvybLJpCvLhgM6s6wEL/LYk3gbxhK3AHYxVWcZLiy7uGtWgA09xlt3H46U+0NSGxSFtv4FJ9yyhRskgDW16z5qOe5ZDQFhuwBCUe0PPCyDTm8nqG8grM8CqJvBgIBZJk1CxvnGpKhUrVrrMkF9jpwWABGzJOSbD0OVjsXrNHkAy3+slXNFDWYyqTLvE4w6mn9ue7yXV6dF/qNTyIuNLyF8kEKrfXwLRRzUsfQD5+Arm5mrQ4gGBUMjS9dUS8o/R8lQYCGChVKLywYr24AqRVTVFtTNGSwjh73qgJInThHv6ULADZw8hkYCOvsfeIDTzg5GPOMfnLR5JmFlzuEoeViIvAMrfQ0FSQHsnf/WEJoZ/hlkrUChTyAgz0+6ShhJVkLUXA6VVZVbUXqWGJe4Vy+fbKYlQWFMo7XV9SVHo4ec3wY="
+services: [ docker ]
+script:
+  - docker pull ${DOCKER_REPO}/${DOCKER_TAG}:${DOCKER_IMAGE_VERSION}
+  - |
+    docker build \
+      --cache-from ${DOCKER_REPO}/${DOCKER_TAG}:${DOCKER_IMAGE_VERSION} \
+      --tag "${DOCKER_TAG}" .
+  - docker login --username ${DOCKER_REPO} --password ${DOCKER_PASS}
+  - export TAG=$([ "${TRAVIS_BRANCH}" == "master" ] && echo "latest" || echo "${TRAVIS_BRANCH}")
+  - docker tag ${DOCKER_TAG} ${DOCKER_REPO}/${DOCKER_TAG}:${TAG}
+  - docker tag ${DOCKER_TAG} ${DOCKER_REPO}/${DOCKER_TAG}:travis-${TRAVIS_BUILD_NUMBER}
+  - docker push ${DOCKER_REPO}/${DOCKER_TAG}:${TAG}
+email:
+  recipients:
+    - "${NOTIFY_EMAIL_ADDRESS}"
+notifications:
+  email:
+    on_success: change
+    on_failure: always
+branches:
+  only: master
