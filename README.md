@@ -18,13 +18,13 @@ docker build . -t os161
 
 ## Usage
 
-Place code to mount into container on local filesystem, `~/Workspace/os161` used in below example.
+Place code to mount into container on local filesystem, `~/os161` used in below example.
 
 Run container, mounting a directory into the container:
 
 ```shell
 docker run --interactive --tty \
-    --volume="${HOME}/Workspace/os161:/home/os161/os161" os161
+    --volume="${HOME}/os161:/home/os161/os161" os161
 ```
 
 Now after compiling a kernel, it can be started.
