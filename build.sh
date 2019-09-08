@@ -11,7 +11,8 @@ GDB161="gdb-7.8+os161-2.1"
 MIRROR="http://www.ece.ubc.ca/~os161/download"
 
 PATCH_DIR="/tmp/os161"
-SOURCE_PREFIX="/usr/local/src"
+SOURCE_PREFIX="/usr/local/src/os161"
+INSTALL_PREFIX="/usr/local/os161"
 
 ubuntu_ver="bionic"
 
@@ -20,9 +21,6 @@ fetch_deps=true
 
 export CC="gcc"
 export CFLAGS=
-
-PATH="${SOURCE_PREFIX}/sys161/bin:${SOURCE_PREFIX}/os161/bin:${PATH}"
-export PATH
 
 install_requirements() {
     echo "deb http://us.archive.ubuntu.com/ubuntu/ ${ubuntu_ver} universe" >> /etc/apt/sources.list
@@ -40,8 +38,9 @@ get_deps() {
     declare -a patches=(
         "https://gitlab.labs.nic.cz/turris/openwrt/raw/9e44516bc5fc71184b63a71a929fa18be7b0bfdc/toolchain/gdb/patches/110-no_extern_inline.patch"
     )
-    set -e
+
     (
+        set -e
         cd "${SOURCE_PREFIX}"
         for fd in "${archives[@]}"; do wget --progress=bar:force "${fd}"; done
         for file in *.tar.gz; do tar -xzf "${file}" && rm -f "${file}"; done
@@ -64,7 +63,7 @@ build_binutils() {
             --nfp \
             --disable-werror \
             --target=mips-harvard-os161 \
-            --prefix="${SOURCE_PREFIX}/os161" 2>&1
+            --prefix="${INSTALL_PREFIX}/os161" 2>&1
         make -j"$(nproc)" 2>&1
         make install 2>&1
         rm -rf "${SOURCE_PREFIX:?}/${BINUTILS161}"
@@ -90,7 +89,7 @@ build_gcc() {
             --disable-libstdcxx \
             --disable-nls \
             --target=mips-harvard-os161 \
-            --prefix="${SOURCE_PREFIX}/os161" 2>&1
+            --prefix="${INSTALL_PREFIX}/os161" 2>&1
         make -j"$(nproc)" 2>&1
         make install 2>&1
         cd ~ && rm -rf /tmp/gcc-build
@@ -110,7 +109,7 @@ build_gdb() {
         ./configure \
             --disable-werror \
             --target=mips-harvard-os161 \
-            --prefix="${SOURCE_PREFIX}/os161" 2>&1
+            --prefix="${INSTALL_PREFIX}/os161" 2>&1
         make -j"$(nproc)" 2>&1
         make install 2>&1
         rm -rf "${SOURCE_PREFIX:?}/${GDB161}"
@@ -125,7 +124,7 @@ build_world() {
         set -e
         cd "${SOURCE_PREFIX}/${SYS161}"
         ./configure \
-            --prefix="${SOURCE_PREFIX}/sys161" mipseb
+            --prefix="${INSTALL_PREFIX}/sys161" mipseb
         make -j"$(nproc)" 2>&1
         make install 2>&1
         mv "${SOURCE_PREFIX:?}/${SYS161}" "${SOURCE_PREFIX:?}/os161"
@@ -137,12 +136,12 @@ build_world() {
 link_files() {
     (
         set -e
-        cd "${SOURCE_PREFIX}/os161/bin"
+        cd "${INSTALL_PREFIX}/os161/bin"
         for file in *; do ln -s --relative "${file}" "/usr/local/bin/${file:13}"; done
     )
     (
         set -e
-        cd "${SOURCE_PREFIX}/sys161/bin"
+        cd "${INSTALL_PREFIX}/sys161/bin"
         for file in *; do ln -s --relative "${file}" "/usr/local/bin/${file}"; done
     )
 }
@@ -204,5 +203,6 @@ echo "GCC161=${GCC161}"
 echo "GDB161=${GDB161}"
 echo "MIRROR=${MIRROR}"
 echo "SOURCE_PREFIX=${SOURCE_PREFIX}"
+echo "INSTALL_PREFIX=${INSTALL_PREFIX}"
 
 main
