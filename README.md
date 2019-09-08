@@ -24,7 +24,7 @@ Run container, mounting a directory into the container:
 
 ```shell
 docker run --interactive --tty \
-    --volume="${HOME}/os161:/home/os161/os161" os161
+    --volume="${HOME}/os161:/home/os161/os161" johnramsden/os161
 ```
 
 Now after compiling a kernel, it can be started.
