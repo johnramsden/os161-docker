@@ -2,7 +2,7 @@
 
 set -e
 
-declare -a build_deps=('bmake' 'ncurses-dev' 'libmpc-dev' 'wget' 'build-essential')
+declare -a build_deps=('bmake' 'ncurses-dev' 'libmpc-dev' 'wget' 'curl' 'build-essential' 'ca-certificates')
 
 SYS161="sys161-2.0.3"
 BINUTILS161="binutils-2.24+os161-2.1"
@@ -10,6 +10,7 @@ GCC161="gcc-4.8.3+os161-2.1"
 GDB161="gdb-7.8+os161-2.1"
 MIRROR="http://www.ece.ubc.ca/~os161/download"
 
+PATCH_DIR="/tmp/os161"
 SOURCE_PREFIX="/usr/local/src"
 
 ubuntu_ver="bionic"
@@ -30,38 +31,53 @@ install_requirements() {
 }
 
 get_deps() {
-    declare -a file_links=(
+    declare -a archives=(
         "${MIRROR}/${BINUTILS161}.tar.gz"
         "${MIRROR}/${GCC161}.tar.gz"
         "${MIRROR}/${GDB161}.tar.gz"
         "${MIRROR}/${SYS161}.tar.gz"
     )
+    declare -a patches=(
+        "https://gitlab.labs.nic.cz/turris/openwrt/raw/9e44516bc5fc71184b63a71a929fa18be7b0bfdc/toolchain/gdb/patches/110-no_extern_inline.patch"
+    )
+    set -e
     (
         cd "${SOURCE_PREFIX}"
-        for fd in "${file_links[@]}"; do wget --progress=bar:force "${fd}"; done
+        for fd in "${archives[@]}"; do wget --progress=bar:force "${fd}"; done
         for file in *.tar.gz; do tar -xzf "${file}" && rm -f "${file}"; done
+    )
+    (
+        set -e
+        mkdir -p "${PATCH_DIR}"
+        cd "${PATCH_DIR}"
+        for fd in "${patches[@]}"; do wget --progress=bar:force "${fd}"; done
     )
 }
 
 build_binutils() {
     echo '*** Building binutils ***'
-    (
+    if ! (
+        set -e
         cd "${SOURCE_PREFIX}/${BINUTILS161}"
         touch ./*.info intl/plural.c
         ./configure \
             --nfp \
             --disable-werror \
             --target=mips-harvard-os161 \
-            --prefix="${SOURCE_PREFIX}/os161"
+            --prefix="${SOURCE_PREFIX}/os161" 2>&1
         make -j"$(nproc)" 2>&1
         make install 2>&1
         rm -rf "${SOURCE_PREFIX:?}/${BINUTILS161}"
-    ) > /var/log/binutils.log || tail /var/log/binutils.log
+    ) > /var/log/binutils.log; then
+        tail /var/log/binutils.log
+        exit 1
+    fi
 }
 
 build_gcc() {
     echo '*** Building gcc ***'
-   (
+    if ! (
+        set -e
         touch "${SOURCE_PREFIX}/${GCC161}"/*.info "${SOURCE_PREFIX}/${GCC161}/intl/plural.c"
         mkdir -p /tmp/gcc-build
         cd /tmp/gcc-build
@@ -73,47 +89,59 @@ build_gcc() {
             --disable-libssp \
             --disable-libstdcxx \
             --disable-nls \
-            --target=mips-harvard-os161 --prefix="${SOURCE_PREFIX}/os161"
+            --target=mips-harvard-os161 \
+            --prefix="${SOURCE_PREFIX}/os161" 2>&1
         make -j"$(nproc)" 2>&1
         make install 2>&1
         cd ~ && rm -rf /tmp/gcc-build
-   ) > /var/log/gcc.log || tail /var/log/gcc.log
+    ) > /var/log/gcc.log; then
+        tail /var/log/gcc.log && exit 1
+    fi
 }
 
 
 build_gdb() {
     echo '*** Building gdb ***'
-    (
+    if ! (
+        set -e
         cd "${SOURCE_PREFIX}/${GDB161}"
+        patch --strip=1 < "${PATCH_DIR}/110-no_extern_inline.patch"
         touch ./*.info intl/plural.c
         ./configure \
             --disable-werror \
             --target=mips-harvard-os161 \
-            --prefix="${SOURCE_PREFIX}/os161"
+            --prefix="${SOURCE_PREFIX}/os161" 2>&1
         make -j"$(nproc)" 2>&1
         make install 2>&1
         rm -rf "${SOURCE_PREFIX:?}/${GDB161}"
-    ) > /var/log/gdb.log || tail /var/log/gdb.log
+    ) > /var/log/gdb.log; then
+        tail /var/log/gdb.log && exit 1
+    fi
 }
 
 build_world() {
     echo '*** Building System/161 ***'
-    (
+    if ! (
+        set -e
         cd "${SOURCE_PREFIX}/${SYS161}"
         ./configure \
             --prefix="${SOURCE_PREFIX}/sys161" mipseb
         make -j"$(nproc)" 2>&1
         make install 2>&1
         mv "${SOURCE_PREFIX:?}/${SYS161}" "${SOURCE_PREFIX:?}/os161"
-    ) > /var/log/sys161.log || tail /var/log/sys161.log
+    ) > /var/log/sys161.log; then
+        tail /var/log/sys161.log && exit 1
+    fi
 }
 
 link_files() {
     (
+        set -e
         cd "${SOURCE_PREFIX}/os161/bin"
         for file in *; do ln -s --relative "${file}" "/usr/local/bin/${file:13}"; done
     )
     (
+        set -e
         cd "${SOURCE_PREFIX}/sys161/bin"
         for file in *; do ln -s --relative "${file}" "/usr/local/bin/${file}"; done
     )
@@ -124,7 +152,7 @@ create_user() {
 }
 
 help() {
-    printf "%s\n\t%s\n\t%s\n\t%s\n\t%s\n\t%s\n\t%s\n\t%s\n\t" "USAGE: $0" \
+    printf "%s\n\t%s\n\t%s\n\t%s\n\t%s\n\t%s\n\t%s\n\t%s\n\t%s\n\t" "USAGE: $0" \
         "[-s SYS161_VERSION ]" \
         "[-b BINUTILS161_VERSION ]" \
         "[-g GCC161_VERSION ]" \
