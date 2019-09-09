@@ -146,10 +146,6 @@ link_files() {
     )
 }
 
-create_user() {
-    useradd --create-home --shell=/bin/bash --user-group os161
-}
-
 help() {
     printf "%s\n\t%s\n\t%s\n\t%s\n\t%s\n\t%s\n\t%s\n\t%s\n\t%s\n\t" "USAGE: $0" \
         "[-s SYS161_VERSION ]" \
@@ -173,7 +169,6 @@ main() {
     build_gdb
     build_world
     link_files
-    create_user
 }
 
 options=':s:b:g:e:m:p:r:dh'

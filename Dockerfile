@@ -48,11 +48,13 @@ RUN /tmp/os161/build.sh -d \
 FROM base AS runner
 
 COPY --from=builder "${INSTALL_PREFIX}" "${INSTALL_PREFIX}"
+
 RUN cd "${INSTALL_PREFIX}/os161/bin" && \
     for file in *; do ln -s --relative "${file}" "/usr/local/bin/${file:13}" && ln -s --relative "${file}" "/usr/local/bin/${file}"; done && \
     cd "${INSTALL_PREFIX}/sys161/bin" && \
     for file in *; do ln -s --relative "${file}" "/usr/local/bin/${file}"; done && \
-    useradd --create-home --shell=/bin/bash --user-group os161
+    useradd --create-home --shell=/bin/bash --user-group os161 && \
+    echo 'set auto-load safe-path /' > /home/os161/.gdbinit
 
 USER os161
 WORKDIR /home/os161
