@@ -1,10 +1,12 @@
 # OS161 in Docker
 
+[![Build Status](https://travis-ci.com/johnramsden/os161-docker.svg?branch=master)](https://travis-ci.com/johnramsden/os161-docker)
+
 ## Pull from Docker Hub
 
 Docker Hub images are built from the code in this repository. Alternatively [build an image from source](#Build).
 
-```
+```shell
 docker pull johnramsden/os161
 ```
 
@@ -31,6 +33,16 @@ Now after compiling a kernel, it can be started.
 
 ```shell
 sys161 kernel
+```
+
+## Multiple Terminals
+
+To open up multiple terminals use `tmuxinside the container.`
+
+or `docker exec` into an already running container.
+
+```shell
+docker exec --interactive --tty <id> /bin/bash
 ```
 
 ---
