@@ -37,7 +37,7 @@ sys161 kernel
 
 ## Multiple Terminals
 
-To open up multiple terminals use `tmuxinside the container.`
+To open up multiple terminals use `tmux` inside the container.
 
 or `docker exec` into an already running container.
 
